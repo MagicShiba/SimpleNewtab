@@ -1,6 +1,9 @@
-
 html {
   background-color: #000;
+  --panel-bg-r: 34;
+  --panel-bg-g: 34;
+  --panel-bg-b: 34;
+  --panel-bg-a: 1;
 }
 
 body {
@@ -11,88 +14,498 @@ body {
   padding: 0;
   color: #eee;
   display: flex;
+  font-size: 14px;
 }
-:root {
-  --tile-size: 112px;
-  --title-height: 3em;
-}
+
 .container {
   width: 80%;
   max-height: 100vh;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 2%;
 }
 
 .left-div, .right-div {
-  width: 49%; /* 留一些空隙 */
+  flex: 0 0 49%;
+  max-width: 49%;
   box-sizing: border-box;
-  padding-right: 1em;
-  padding-left:  1em;
+  padding: 0.5em 1em;
   border-radius: 0.5em;
-  background-color: #222222;
+  background-color: rgba(var(--panel-bg-r), var(--panel-bg-g), var(--panel-bg-b), var(--panel-bg-a));
   overflow: auto;
-  scrollbar-width: none;
-}
-
-#most-visited-list {
-  vertical-align: middle;
-}
-#fov-list {
-  height: 3em;
-  background-color: #444;
-  height: 100%;
-
-}
-a{
-  color: white;
-  height: 3em;
-  width: 100%;
-}
-
-.ic{
-  position: absolute;
-  padding: 0.5em;
-  height: calc(100% - 1em);
-  pointer-events:none;
-  
-}
-.dl{
-  position: absolute;
-  padding-left: 3em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-decoration: none;
-  position: absolute;
-  width: calc(100% - 4em);
-  pointer-events:none;
-}
-/* a:hover { */
-  /* color: #d96c00; /* 鼠标悬停时修改链接文字颜色 */ */
-  /* font-weight:bold; */
-/* } */
-
-
-ul{
-  padding:0;
-}
-
-.fli{
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  background-color: #444444;
-  display: flex;
-  border-radius: 2px;
-  display: flex;
   position: relative;
+}
+
+#fov-list, #most-visited-list {
+  min-height: 3em;
+}
+
+/* ---- scrollbar ---- */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #222;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* ---- drop hint ---- */
+.drop-hint {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 255, 255, 0.15);
+  border: 3px dashed #0ff;
+  border-radius: 0.5em;
+  color: #0ff;
+  font-size: 1.5em;
   align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.drop-hint.show {
+  display: flex;
+}
+
+/* ---- fli container ---- */
+.fli {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em;
+  margin: 0.3em 0em;
+  background-color: #fff3;
+  border-radius: 3px;
   cursor: pointer;
 }
 
-.fli:hover{
-  display: flex;
-  background-color :#000;
+.fli:hover {
+  background-color: #fff1;
   box-shadow: 0 0 0 2px #0ff;
-  font-weight:bold;
-  align-items: center
+}
+
+.fli-link {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.fli img, .his-item img {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 0;
+}
+
+.fli span, .his-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  z-index: 0;
+}
+
+/* ---- history item ---- */
+.his-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 3px;
+  margin: 2px;
+  background-color: #444;
+  cursor: pointer;
+  text-decoration: none;
+  color: white;
+}
+
+.his-item:hover {
+  background-color: #000;
+  box-shadow: 0 0 0 2px #0ff;
+}
+
+/* ---- blur on content only ---- */
+.blurred img, .blurred span {
+  filter: blur(8px);
+}
+
+/* ---- top right icons ---- */
+#top-right-icons {
+  position: fixed;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 3px;
+  z-index: 999;
+  flex-direction: column;
+}
+
+#top-right-icons > div {
+  width: 34px;
+  height: 34px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.3s, background-color 0.3s;
+}
+
+#top-right-icons > div:hover {
+  opacity: 1;
+  background-color: #424251;
+}
+
+#top-right-icons > div.active {
+  opacity: 1;
+  background-color: #424251;
+  box-shadow: 0 0 0 2px #0af;
+}
+
+/* ---- right panels ---- */
+#Div_seting_hid, #Div_history_hid {
+  display: none;
+  position: fixed;
+  top: 2px;
+  padding:2px;
+  right: 2px;
+  width: 300px;
+  box-shadow: 0 0 0 2px #0af;
+  max-height: calc(100% - 4px);
+  background-color: #222;
+  z-index: 998;
+  box-sizing: border-box;
+  overflow-y: auto;
+  border-radius: 4px;
+}
+
+.panel-title {
+  color: white;
+  text-align: center;
+  margin: 0.3em 0 0.5em;
+  font-size: 1em;
+}
+
+.toggle-label {
+  display: flex;
+  gap: 0.4em;
+  padding: 0.5em 0.6em;
+  margin: 0.2em 0;
+  background: #555;
+  cursor: pointer;
+}
+
+.toggle-label:hover {
+  background-color: #000;
+  box-shadow: 0 0 0 2px #0ff;
+}
+
+#historySearch {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#history-list {
+  overflow-y: auto;
+}
+
+/* ---- wallpaper & settings extras ---- */
+#wallpaper-bg-wrap {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+#wallpaper-bg {
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(1.1);
+}
+
+.btn-row {
+  display: flex;
+  gap: 4px;
+  margin:2px;
+}
+.btn-row .btn {
+  flex: 1;
+}
+
+.setting-divider {
+  border: none;
+  border-top: 1px solid #555;
+  margin: 8px 0;
+}
+
+.setting-subtitle {
+  color: white;
+  text-align: center;
+  margin: 8px 0;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.3em 0.6em;
+}
+
+.range-row label {
+  color: white;
+  flex-shrink: 0;
+  min-width: 2.5em;
+}
+
+.range-row input[type="range"] {
+  flex: 1;
+  height: 4px;
+  background: #555;
+  border-radius: 2px;
+  outline: none;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #0af;
+}
+
+.range-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0af;
+  cursor: pointer;
+  border: none;
+}
+
+.range-row span {
+  color: white;
+  min-width: 3em;
+  text-align: right;
+}
+
+select.ipt option {
+  background: #000;
+  color: white;
+}
+
+/* ---- context menu ---- */
+#contextMenu {
+  display: none;
+  position: fixed;
+  background: #333;
+  border: 1px solid #555;
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  border-radius: 4px;
+  z-index: 1000;
+  min-width: 110px;
+}
+
+.ctx-item {
+  padding: 7px 14px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.ctx-item:hover {
+  background: #555;
+}
+
+/* ---- input window ---- */
+#inputWindow {
+  width: 280px;
+  background-color: #333d;
+  padding: 10px;
+  text-align: center;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0px 0px 8px 0px #fff;
+  z-index: 998;
+  display: none;
+  border-radius: 4px;
+}
+
+.ipt {
+  width: 100%;
+  font-size: 1em;
+  color: white;
+  background: #000;
+  border: 1px solid #555;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.btn {
+  border: 1px solid #444;
+  width: 100%;
+  height: 2.5em;
+  color: white;
+  background-color: #222;
+  cursor: pointer;
+}
+
+.btn:hover {
+  box-shadow: 0 0 0 2px #0ff;
+  background-color: #555;
+}
+
+._title {
+  font-size: 1.1em;
+  margin: 0.3em;
+  color: white;
+}
+
+.div_btn {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+/* ---- light mode ---- */
+html.light {
+  background-color: #e8e8e8;
+  --panel-bg-r: 255;
+  --panel-bg-g: 255;
+  --panel-bg-b: 255;
+}
+
+html.light body {
+  color: #333;
+}
+
+html.light h2,
+html.light .panel-title,
+html.light ._title,
+html.light .setting-subtitle {
+  color: #333;
+}
+
+html.light .fli {
+  background-color: #0002;
+}
+
+html.light .fli:hover {
+  background-color: #0006;
+  box-shadow: 0 0 0 2px #0af;
+}
+
+html.light .his-item {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+html.light .his-item:hover {
+  background-color: #c8c8c8;
+  box-shadow: 0 0 0 2px #0af;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #ddd;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #aaa;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+html.light #Div_seting_hid,
+html.light #Div_history_hid {
+  background-color: #fff;
+}
+
+html.light .toggle-label {
+  background: #e0e0e0;
+  color: #333;
+}
+
+html.light .toggle-label:hover {
+  background-color: #c8c8c8;
+  box-shadow: 0 0 0 2px #0af;
+}
+
+html.light #contextMenu {
+  background: #f0f0f0;
+  border-color: #ccc;
+}
+
+html.light .ctx-item {
+  color: #333;
+}
+
+html.light .ctx-item:hover {
+  background: #ddd;
+}
+
+html.light #inputWindow {
+  background-color: #f0f0f0;
+  box-shadow: 0px 0px 8px 0px #999;
+}
+
+html.light .ipt {
+  color: #333;
+  background: #fff;
+  border-color: #ccc;
+}
+
+html.light select.ipt option {
+  background: #fff;
+  color: #333;
+}
+
+html.light .btn {
+  color: #333;
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+html.light .btn:hover {
+  background-color: #c8c8c8;
+  box-shadow: 0 0 0 2px #0af;
+}
+
+html.light #top-right-icons > div:hover,
+html.light #top-right-icons > div.active {
+  background-color: #ddd;
+}
+
+html.light .drop-hint {
+  background: rgba(0, 170, 255, 0.15);
+  border-color: #0af;
+  color: #0af;
+}
+
+html.light .range-row label,
+html.light .range-row span {
+  color: #333;
+}
+
+html.light .setting-divider {
+  border-top-color: #ccc;
 }

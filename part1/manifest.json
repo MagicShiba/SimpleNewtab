@@ -1,0 +1,30 @@
+{
+  "name": "起始页",
+  "version": "0.0.0.1",
+  "manifest_version": 3,
+  "description": "起始页测试",
+  "permissions": [ "topSites", "storage", "bookmarks", "favicon", "history" ],
+  
+  "icons": {      
+      "32": "src/ico_32.png",
+      "48": "src/ico_48.png",
+      "64": "src/ico_64.png",
+      "128": "src/ico_128.png"
+  },
+  
+  "chrome_url_overrides": {
+      "newtab": "pag/ntp.html"
+   },
+   
+  "action": {
+      "default_popup": "pag/test.html"
+  },
+  
+
+  "web_accessible_resources": [
+    {
+      "resources": ["src/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -1,3 +1,6 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 html {
   background-color: #000;
   --panel-bg-r: 34;
@@ -312,6 +315,102 @@ select.ipt option {
   color: white;
 }
 
+/* ---- group bar ---- */
+.group-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  margin-bottom: -0.2em;
+}
+.group-tabs {
+  display: flex;
+  gap: 0;
+  flex: 1;
+}
+.group-title{
+  margin: 0.2em 0em;
+  color: #999;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+.group-tab {
+  margin: 0em 0.3em;
+  color: #999;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+h2{
+  margin: 0.2em 0em;
+}
+.group-title:hover,.group-tab:hover {
+  color: #ddd;
+  border-bottom-color: #555;
+}
+.group-title.active,.group-tab.active {
+  color: #eee;
+  border-bottom-color: #888;
+}
+
+.group-title::after, .group-tab::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%; /* 撑满宽度 */
+  height: 3px;
+  transition: 0.3s;
+}
+.group-title:hover::after, .group-tab:hover::after {
+  background-color: #555; 
+}
+.group-title.active::after, .group-tab.active::after {
+  background-color: #888;
+}
+
+
+.group-add-btn {
+  height: 35px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 2em;
+  color: #999;
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
+}
+.group-bar:hover .group-add-btn {
+  display: flex;
+}
+.group-add-btn:hover {
+  color: #ddd;
+}
+.group-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #888;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  padding: 0;
+  width: 80px;
+}
+
+/* ---- group menu ---- */
+#groupMenu {
+  display: none;
+  position: fixed;
+  background: #333;
+  border: 1px solid #555;
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  border-radius: 4px;
+  z-index: 1000;
+  min-width: 100px;
+}
+
 /* ---- context menu ---- */
 #contextMenu {
   display: none;
@@ -406,6 +505,44 @@ html.light .setting-subtitle {
   color: #333;
 }
 
+.fli.drop-before {
+  outline: 2px solid #0af;
+  outline-offset: -2px;
+}
+
+#iconOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+  justify-content: center;
+}
+.icon-option {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #555;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.icon-option:hover {
+  border-color: #0af;
+}
+.icon-option.selected {
+  border-color: #0af;
+  background: rgba(0,170,255,0.2);
+}
+.icon-option img {
+  width: 18px;
+  height: 18px;
+}
+.icon-option:first-child {
+  font-size: 1.1em;
+  color: #999;
+}
+
 html.light .fli {
   background-color: #0002;
 }
@@ -468,6 +605,17 @@ html.light #inputWindow {
   box-shadow: 0px 0px 8px 0px #999;
 }
 
+html.light .icon-option {
+  border-color: #bbb;
+}
+html.light .icon-option:hover,
+html.light .icon-option.selected {
+  border-color: #0af;
+}
+html.light .icon-option:first-child {
+  color: #555;
+}
+
 html.light .ipt {
   color: #333;
   background: #fff;
@@ -495,10 +643,45 @@ html.light #top-right-icons > div.active {
   background-color: #ddd;
 }
 
+html.light .group-title,
+html.light .group-tab {
+  color: #777;
+}
+html.light .group-title:hover,
+html.light .group-tab:hover {
+  color: #333;
+  border-bottom-color: #bbb;
+}
+html.light .group-title.active,
+html.light .group-tab.active {
+  color: #333;
+  border-bottom-color: #999;
+}
+html.light .group-add-btn {
+  color: #aaa;
+}
+html.light .group-add-btn:hover {
+  color: #555;
+}
+html.light .group-input {
+  border-bottom-color: #999;
+  color: inherit;
+}
+
 html.light .drop-hint {
   background: rgba(0, 170, 255, 0.15);
   border-color: #0af;
   color: #0af;
+}
+
+html.light .group-tab {
+  color: #333;
+}
+
+
+html.light #groupMenu {
+  background: #f0f0f0;
+  border-color: #ccc;
 }
 
 html.light .range-row label,

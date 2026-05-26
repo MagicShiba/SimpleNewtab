@@ -65,6 +65,10 @@
   <div id="history-list"></div>
 </div>
 
+<div id="groupMenu">
+  <div class="ctx-item" id="groupRename">重命名</div>
+  <div class="ctx-item" id="groupDelete">删除分组</div>
+</div>
 <div id="contextMenu">
   <div class="ctx-item" id="ctxAddFav">添加到收藏</div>
   <div class="ctx-item" id="ctxEdit">编辑</div>
@@ -76,14 +80,18 @@
   <input type="text" id="u_title" class="ipt" maxlength="20" placeholder="输入标题~">
   <p class="_title">URL:</p>
   <input type="text" id="u_url" class="ipt" placeholder="输入url~">
+  <p class="_title">图标:</p>
+  <div id="iconOptions"></div>
+  <input type="hidden" id="u_icon" value="">
   <div class="div_btn">
-    <button class="btn" id="btncancel">取消</button><button class="btn" id="btnok">确定</button>
+    <button class="btn" id="btndelete" style="display:none">删除</button><button class="btn" id="btncancel">取消</button><button class="btn" id="btnok">确定</button>
   </div>
 </div>
 
 <div class="container">
   <div class="left-div" id="left-drop-zone">
-    <h2>收藏</h2><p>从右侧拖动链接到此处添加收藏。</p>
+    <div class="group-bar"><h2 class="group-title">收藏</h2><div class="group-tabs" id="groupTabs"></div><div class="group-add-btn" id="groupAddBtn">+</div></div>
+    <p>从右侧拖动链接到此处添加收藏。</p>
     <div class="drop-hint" id="dropHint">释放以添加收藏</div>
     <div id="fov-list"></div>
   </div>

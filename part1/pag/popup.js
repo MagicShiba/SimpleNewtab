@@ -28,7 +28,7 @@ function renderPopup() {
       var col = document.createElement('div');
       col.className = 'group';
       var title = document.createElement('h2');
-      title.textContent = group.name || '默认';
+      title.textContent = group.name || '默认收藏';
       col.appendChild(title);
 
       var items = group.items || [];

@@ -7,6 +7,7 @@ var _historyCache = [];
 var _favGroups = [];
 var _activeGroupIndex = 0;
 var _groupTabContext = -1;
+var _groupDragging = false;
 
 function faviconURL(u) {
   var url = new URL(chrome.runtime.getURL('/_favicon/'));
@@ -159,7 +160,7 @@ function saveBookmark(title, url, oldTitle, icon) {
     if (found) {
       found.title = title;
       found.url = url;
-      found.icon = icon !== undefined ? icon : (found.icon || '');
+      found.icon = icon !== undefined ? icon : '';
     }
   } else {
     items.push({ title: title, url: url, icon: icon || '' });
@@ -221,12 +222,14 @@ function renderGroups() {
 function renderGroupTabs() {
   var tabs = document.getElementById('groupTabs');
   while (tabs.firstChild) tabs.removeChild(tabs.firstChild);
+  var dragIndex = -1;
   _favGroups.forEach(function(g, i) {
     if (i === 0) return;
     var tab = document.createElement('div');
     tab.className = 'group-tab' + (i === _activeGroupIndex ? ' active' : '');
     tab.textContent = g.name;
     tab.dataset.index = i;
+    tab.draggable = true;
     tab.addEventListener('click', function() { switchGroup(parseInt(this.dataset.index)); });
     tab.addEventListener('contextmenu', function(e) {
       e.preventDefault();
@@ -235,6 +238,51 @@ function renderGroupTabs() {
     });
     tab.addEventListener('dblclick', function() {
       startInlineRename(parseInt(this.dataset.index));
+    });
+    tab.addEventListener('dragstart', function(e) {
+      dragIndex = i;
+      _groupDragging = true;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'group');
+    });
+    tab.addEventListener('dragover', function(e) {
+      if (dragIndex === -1 || dragIndex === i) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tabs.querySelectorAll('.drop-before').forEach(function(el) { el.classList.remove('drop-before'); });
+      if (i > dragIndex) {
+        tab.classList.add('drop-before');
+      } else {
+        tab.previousElementSibling && tab.previousElementSibling.classList.add('drop-before');
+      }
+    });
+    tab.addEventListener('dragleave', function(e) {
+      tab.classList.remove('drop-before');
+    });
+    tab.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (dragIndex === -1 || dragIndex === i) { dragIndex = -1; return; }
+      tabs.querySelectorAll('.drop-before').forEach(function(el) { el.classList.remove('drop-before'); });
+      var item = _favGroups.splice(dragIndex, 1)[0];
+      var targetIndex = i;
+      if (dragIndex < targetIndex) targetIndex--;
+      _favGroups.splice(targetIndex, 0, item);
+      if (_activeGroupIndex === dragIndex) {
+        _activeGroupIndex = targetIndex;
+      } else if (dragIndex < _activeGroupIndex && targetIndex >= _activeGroupIndex) {
+        _activeGroupIndex--;
+      } else if (dragIndex > _activeGroupIndex && targetIndex <= _activeGroupIndex) {
+        _activeGroupIndex++;
+      }
+      dragIndex = -1;
+      saveFavGroups();
+      renderGroups();
+    });
+    tab.addEventListener('dragend', function(e) {
+      dragIndex = -1;
+      _groupDragging = false;
+      tabs.querySelectorAll('.drop-before').forEach(function(el) { el.classList.remove('drop-before'); });
     });
     tabs.appendChild(tab);
   });
@@ -352,6 +400,11 @@ function hideGroupMenu() {
   _groupTabContext = -1;
 }
 
+function iconDomain(url) {
+  var m = url.match(/:\/\/([^\/]+)/);
+  return m ? m[1] : url;
+}
+
 function openInputWindow(title, url, oldTitle) {
   _editKey = oldTitle || null;
   document.getElementById('u_title').value = title || '';
@@ -368,7 +421,7 @@ function openInputWindow(title, url, oldTitle) {
     var found = items.find(function(item) { return item.title === oldTitle; });
     if (found && found.icon) selectedIcon = found.icon;
   }
-  chrome.topSites.get().then(function(mostVisitedURLs) {
+  chrome.history.search({ text: '', maxResults: 100, startTime: 0 }, function(results) {
     var noneDiv = document.createElement('div');
     noneDiv.className = 'icon-option' + (!selectedIcon ? ' selected' : '');
     noneDiv.textContent = '×';
@@ -379,14 +432,18 @@ function openInputWindow(title, url, oldTitle) {
       document.getElementById('u_icon').value = '';
     });
     iconOptions.appendChild(noneDiv);
-    mostVisitedURLs.forEach(function(site) {
+    var seen = {};
+    results.forEach(function(site) {
       if (!site.url) return;
+      var domain = iconDomain(site.url);
+      if (seen[domain]) return;
+      seen[domain] = true;
       var div = document.createElement('div');
       div.className = 'icon-option';
       var img = document.createElement('img');
       img.src = faviconURL(site.url);
-      img.alt = site.title;
-      img.title = site.title;
+      img.alt = site.title || domain;
+      img.title = site.title || domain;
       if (faviconURL(site.url) === selectedIcon) div.classList.add('selected');
       div.appendChild(img);
       div.addEventListener('click', function() {
@@ -411,7 +468,7 @@ function addLink() {
   var url = document.getElementById('u_url').value.trim();
   var icon = document.getElementById('u_icon').value.trim();
   if (!title || !url) return;
-  saveBookmark(title, url, _editKey, icon || undefined);
+  saveBookmark(title, url, _editKey, icon);
   closeInputWindow();
 }
 
@@ -471,14 +528,14 @@ function setupDragDrop() {
 
   // ---- external drop ----
   zone.addEventListener('dragenter', function(e) {
-    if (_dragSourceIndex !== -1) return;
+    if (_dragSourceIndex !== -1 || _groupDragging) return;
     e.preventDefault();
     dragCounter++;
     if (dragCounter === 1) hint.classList.add('show');
   });
 
   zone.addEventListener('dragleave', function(e) {
-    if (_dragSourceIndex !== -1) return;
+    if (_dragSourceIndex !== -1 || _groupDragging) return;
     e.preventDefault();
     dragCounter--;
     if (dragCounter === 0) hint.classList.remove('show');
@@ -488,6 +545,50 @@ function setupDragDrop() {
     e.preventDefault();
   });
 
+  function showToast(msg) {
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.classList.add('show'); }, 10);
+    setTimeout(function() {
+      toast.classList.remove('show');
+      setTimeout(function() { toast.remove(); }, 300);
+    }, 4000);
+  }
+
+  function getTitleFromDrop(e, url, callback) {
+    var html = e.dataTransfer.getData('text/html') || '';
+    if (html) {
+      var temp = document.createElement('div');
+      temp.innerHTML = html;
+      var link = temp.querySelector('a');
+      if (link) {
+        var t = link.textContent || '';
+        if (t.trim() && t.indexOf('javascript:') !== 0) { callback(t.trim()); return; }
+      }
+    }
+    var plain = e.dataTransfer.getData('text/plain') || '';
+    if (plain && plain.indexOf('http') !== 0 && plain.indexOf('://') === -1) {
+      var lines = plain.split('\n');
+      if (lines[0] && lines[0].trim() && lines[0].indexOf('http') !== 0 && lines[0].indexOf('javascript:') !== 0) {
+        callback(lines[0].trim()); return;
+      }
+    }
+    if (url.indexOf('javascript:') === 0) { callback('无标题'); return; }
+    chrome.bookmarks.search({ url: url }, function(marks) {
+      if (marks && marks.length > 0 && marks[0].title) {
+        callback(marks[0].title); return;
+      }
+      chrome.history.search({ text: url, maxResults: 1 }, function(results) {
+        if (results.length > 0 && results[0].title) {
+          callback(results[0].title); return;
+        }
+        callback(url);
+      });
+    });
+  }
+
   zone.addEventListener('drop', function(e) {
     if (_dragSourceIndex !== -1) { _dragSourceIndex = -1; return; }
     e.preventDefault();
@@ -496,29 +597,33 @@ function setupDragDrop() {
 
     var url = e.dataTransfer.getData('text/uri-list') || '';
     var html = e.dataTransfer.getData('text/html') || '';
+    var plain = e.dataTransfer.getData('text/plain') || '';
+    var isJS = false;
 
-    if (!url && html) {
-      var temp = document.createElement('div');
-      temp.innerHTML = html;
-      var link = temp.querySelector('a');
-      if (link) url = link.href;
+    if (url === 'about:blank#blocked' || !url) {
+      if (plain && plain.indexOf('javascript:') === 0) {
+        url = plain;
+        isJS = true;
+      } else if (html) {
+        var temp = document.createElement('div');
+        temp.innerHTML = html;
+        var link = temp.querySelector('a');
+        if (link) {
+          var rawHref = link.getAttribute('href');
+          if (rawHref && rawHref.indexOf('javascript:') === 0) {
+            url = rawHref;
+            isJS = true;
+          } else if (!url) {
+            url = rawHref || link.href;
+          }
+        }
+      }
     }
 
     if (!url) return;
 
-    var title = '';
-    if (html) {
-      var temp = document.createElement('div');
-      temp.innerHTML = html;
-      var link = temp.querySelector('a');
-      if (link) title = link.getAttribute('aria-label') || link.textContent || '';
-    }
-
-    chrome.history.search({ text: url, maxResults: 1 }, function(results) {
-      if (results.length > 0 && !title) {
-        title = results[0].title || results[0].url;
-      }
-      if (!title) title = url;
+    if (isJS) showToast('javascript脚本已添加，但受浏览器限制，此类型的网址在插件环境下无法执行。');
+    getTitleFromDrop(e, url, function(title) {
       saveBookmark(title, url);
     });
   });
@@ -871,6 +976,84 @@ function renderPopupGroups() {
   });
 }
 
+// ---- export / import ----
+function exportFav() {
+  var lines = [];
+  _favGroups.forEach(function(g, i) {
+    if (i > 0) lines.push('# ' + g.name);
+    g.items.forEach(function(item) {
+      var t = item.title.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      lines.push('[' + t + '](' + item.url + ')');
+    });
+    if (i > 0 && i < _favGroups.length - 1) lines.push('');
+  });
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'favorites.md';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 100);
+}
+
+function importFav(content) {
+  var lines = content.split('\n');
+  var importedGroups = [];
+  var groupItems = [];
+  var currentGroup = '';
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+    if (line.indexOf('# ') === 0) {
+      importedGroups.push({ name: currentGroup, items: groupItems });
+      groupItems = [];
+      currentGroup = line.slice(2).trim();
+      continue;
+    }
+    var m = line.match(/^\[([\s\S]*?)\]\(([\s\S]*?)\)$/);
+    if (m) {
+      var title = m[1].replace(/\\\[/g, '[').replace(/\\\]/g, ']');
+      groupItems.push({ title: title, url: m[2] });
+    }
+  }
+  importedGroups.push({ name: currentGroup, items: groupItems });
+
+  var seen = {};
+  var newGroups = [];
+
+  importedGroups.forEach(function(ig) {
+    var key = ig.name || '\0';
+    if (seen[key]) return;
+    seen[key] = true;
+
+    var merged;
+    if (ig.name) {
+      var existing = _favGroups.find(function(g) { return g.name === ig.name; });
+      merged = existing ? existing.items.slice() : [];
+    } else {
+      merged = _favGroups[0].items.slice();
+    }
+    ig.items.forEach(function(item) {
+      if (!merged.find(function(mi) { return mi.url === item.url; })) merged.push(item);
+    });
+    newGroups.push({ name: ig.name, items: merged });
+  });
+
+  _favGroups.forEach(function(g, i) {
+    if (i === 0 && seen['\0']) return;
+    if (!g.name || seen[g.name]) return;
+    seen[g.name] = true;
+    newGroups.push({ name: g.name, items: g.items.slice() });
+  });
+
+  _favGroups = newGroups;
+  if (_activeGroupIndex >= _favGroups.length) _activeGroupIndex = 0;
+  saveFavGroups();
+  renderGroups();
+  renderPopupGroups();
+}
+
 // ---- init ----
 function init() {
   document.getElementById('Div_seting').addEventListener('click', function() {
@@ -955,6 +1138,24 @@ function init() {
 
   document.getElementById('historySearch').addEventListener('input', function() {
     loadHistory(this.value);
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', exportFav);
+  document.getElementById('importBtn').addEventListener('click', function() {
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function() {
+    var file = this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      importFav(e.target.result);
+      var groupLen = _favGroups.length;
+      showToast('导入完成，共 ' + groupLen + ' 个分组');
+      renderList(_favGroups[_activeGroupIndex].items, 'fov-list');
+    };
+    reader.readAsText(file);
+    this.value = '';
   });
 
   setupToggles();

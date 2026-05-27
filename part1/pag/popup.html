@@ -24,16 +24,14 @@ body {
   background: #333;
   color: #eee;
   cursor: pointer;
-  padding: 3px 10px;
-  border-radius: 3px;
-  font-size: 13px;
+  padding: 2px 4px;
+  font-size: 12px;
 }
 .header button:hover { background: #555; }
 .groups {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   overflow-x: auto;
-  padding-bottom: 4px;
 }
 .group {
   flex: 0 0 160px;
@@ -64,7 +62,6 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 7em;
 }
 .empty { color: #777; font-size: 12px; padding: 4px 0; }
 html.light { background: #e8e8e8; }
@@ -81,6 +78,6 @@ html.light .empty { color: #aaa; }
   <h1>收藏夹</h1>
   </div>
 <div class="groups" id="groupsContainer"></div>
-<script src="test.js"></script>
+<script src="popup.js"></script>
 </body>
 </html>

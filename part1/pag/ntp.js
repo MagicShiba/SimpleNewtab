@@ -116,7 +116,7 @@ function renderHistoryResults(results) {
 
 function loadHistory(query) {
   if (!query) {
-    chrome.history.search({ text: '', maxResults: 500, startTime: 0 }, function(results) {
+    chrome.history.search({ text: '', maxResults: 200, startTime: 0 }, function(results) {
       _historyCache = results;
       renderHistoryResults(results);
     });
@@ -203,6 +203,7 @@ function loadFavGroups() {
     _activeGroupIndex = result.activeGroup || 0;
     if (_activeGroupIndex >= _favGroups.length) _activeGroupIndex = 0;
     renderGroups();
+    renderPopupGroups();
     saveFavGroups();
   });
 }
@@ -252,6 +253,7 @@ function addGroup(name) {
   _activeGroupIndex = _favGroups.length - 1;
   renderGroups();
   saveFavGroups();
+  renderPopupGroups();
 }
 
 function getUniqueGroupName(baseName) {
@@ -288,7 +290,6 @@ function startInlineCreate() {
   input.select();
 }
 
-var _renamingIndex = -1;
 function startInlineRename(index) {
   if (index <= 0 || index >= _favGroups.length) return;
   var tab = document.getElementById('groupTabs').children[index - 1];
@@ -326,6 +327,7 @@ function renameGroup(index, name) {
   _favGroups[index].name = name;
   renderGroups();
   saveFavGroups();
+  renderPopupGroups();
 }
 
 function deleteGroup(index) {
@@ -334,6 +336,7 @@ function deleteGroup(index) {
   if (_activeGroupIndex >= _favGroups.length) _activeGroupIndex = _favGroups.length - 1;
   renderGroups();
   saveFavGroups();
+  renderPopupGroups();
 }
 
 function showGroupMenu(x, y, index) {
@@ -771,6 +774,103 @@ function saveVisState() {
   });
 }
 
+// ---- lunar calendar ----
+var lunarInfo = [0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x16a95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63];
+var lunarMonths = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+var lunarDays = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+
+function lYearDays(y) { var i, s = 348; for (i = 0x8000; i > 0x8; i >>= 1) s += (lunarInfo[y-1900] & i) ? 1 : 0; return s + leapDays(y); }
+function leapMonth(y) { return lunarInfo[y-1900] & 0xf; }
+function leapDays(y) { return leapMonth(y) ? (lunarInfo[y-1900] & 0x10000 ? 30 : 29) : 0; }
+function monthDays(y, m) { return (lunarInfo[y-1900] & (0x10000 >> m)) ? 30 : 29; }
+
+function solar2lunar(y, m, d) {
+  var base = new Date(1900, 0, 31);
+  var target = new Date(y, m - 1, d);
+  var offset = Math.floor((target - base) / 86400000);
+  var i, temp = 0, lunarYear;
+  for (i = 1900; i < 2101 && offset > 0; i++) { temp = lYearDays(i); offset -= temp; }
+  if (offset < 0) { offset += temp; i--; }
+  lunarYear = i;
+  var leap = leapMonth(i);
+  var months = [];
+  for (i = 1; i <= 12; i++) { months.push({ m: i, leap: false }); if (leap === i) months.push({ m: i, leap: true }); }
+  for (i = 0; i < months.length && offset >= 0; i++) {
+    temp = months[i].leap ? leapDays(lunarYear) : monthDays(lunarYear, months[i].m);
+    if (offset < temp) break;
+    offset -= temp;
+  }
+  return { year: lunarYear, month: months[i].m, day: offset + 1, isLeap: months[i].leap };
+}
+
+// ---- clock ----
+function updateClock() {
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+  var w = ['日','一','二','三','四','五','六'][now.getDay()];
+  var h = ('0' + now.getHours()).slice(-2);
+  var mi = ('0' + now.getMinutes()).slice(-2);
+  var s = ('0' + now.getSeconds()).slice(-2);
+  var lunar = solar2lunar(y, m, d);
+  var lunarStr = (lunar.isLeap ? '闰' : '') + lunarMonths[lunar.month - 1] + '月' + lunarDays[lunar.day - 1];
+  var timeStr = h + ':' + mi + ':' + s;
+  var dateStr = y + '年' + m + '月' + d + '日\n星期' + w;
+  document.getElementById('clockTime').textContent = timeStr + '\n' + dateStr + '\n' + lunarStr;
+}
+
+function applyClockVisibility() {
+  document.getElementById('datetime').style.display = document.getElementById('showClock').checked ? '' : 'none';
+}
+
+function setupClock() {
+  var cb = document.getElementById('showClock');
+  chrome.storage.local.get('settings', function(result) {
+    var s = result.settings || {};
+    if (s.showClock !== undefined) cb.checked = s.showClock;
+    applyClockVisibility();
+  });
+  cb.addEventListener('change', function() {
+    applyClockVisibility();
+    chrome.storage.local.get('settings', function(result) {
+      var s = result.settings || {};
+      s.showClock = cb.checked;
+      chrome.storage.local.set({ 'settings': s });
+    });
+  });
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+// ---- popup group selection ----
+function renderPopupGroups() {
+  var container = document.getElementById('popupGroupList');
+  if (!container) return;
+  container.innerHTML = '';
+  chrome.storage.local.get('settings', function(result) {
+    var s = result.settings || {};
+    var selected = s.popupGroups || [0];
+    _favGroups.forEach(function(g, i) {
+      var label = document.createElement('label');
+      label.className = 'toggle-label';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = selected.indexOf(i) !== -1;
+      cb.addEventListener('change', function() {
+        if (cb.checked) {
+          if (selected.indexOf(i) === -1) selected.push(i);
+        } else {
+          selected = selected.filter(function(v) { return v !== i; });
+        }
+        s.popupGroups = selected;
+        chrome.storage.local.set({ 'settings': s });
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(g.name || '默认'));
+      container.appendChild(label);
+    });
+  });
+}
+
 // ---- init ----
 function init() {
   document.getElementById('Div_seting').addEventListener('click', function() {
@@ -861,6 +961,7 @@ function init() {
   setupBlurToggle();
   setupLightMode();
   setupWallpaper();
+  setupClock();
   setupDragDrop();
 
   window.addEventListener('beforeunload', function() {

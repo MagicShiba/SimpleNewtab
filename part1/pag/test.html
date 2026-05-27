@@ -1,6 +1,86 @@
+<!DOCTYPE html>
 <html>
-  <script src="test.js"></script>
-  <body>
-    <h1>Hello Extensions</h1>
-  </body>
+<head>
+<meta charset="utf-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #1a1a1a; }
+body {
+  font-family: sans-serif;
+  font-size: 13px;
+  color: #eee;
+  min-width: 400px;
+  padding: 8px;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.header h1 { font-size: 16px; }
+.header button {
+  border: 1px solid #555;
+  background: #333;
+  color: #eee;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+.header button:hover { background: #555; }
+.groups {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.group {
+  flex: 0 0 160px;
+  max-width: 160px;
+}
+.group h2 {
+  font-size: 14px;
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.group-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 2px;
+}
+.group-item:hover { background: #333; }
+.group-item img { width: 16px; height: 16px; flex-shrink: 0; }
+.group-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 7em;
+}
+.empty { color: #777; font-size: 12px; padding: 4px 0; }
+html.light { background: #e8e8e8; }
+html.light body { color: #333; }
+html.light .header button { border-color: #ccc; background: #e0e0e0; color: #333; }
+html.light .header button:hover { background: #c8c8c8; }
+html.light .group-item:hover { background: #d0d0d0; }
+html.light .group h2 { border-bottom-color: #ccc; }
+html.light .empty { color: #aaa; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>收藏夹</h1>
+  </div>
+<div class="groups" id="groupsContainer"></div>
+<script src="test.js"></script>
+</body>
 </html>

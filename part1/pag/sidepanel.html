@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; color: #eee; font-family: sans-serif; }
+#toolbar { display: flex; align-items: center; padding: 2px 4px; background: #222; border-bottom: 1px solid #444; gap: 4px; height: 30px; flex-shrink: 0; }
+.toolbar-btn { background: none; color: #ccc; border: 1px solid #555; cursor: pointer; padding: 2px 5px; font-size: 11px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; height: 22px; line-height: 16px; }
+.toolbar-btn:hover { background: #444; }
+.toolbar-btn.on { border-color: #0af; color: #0af; }
+#bookmarkBar { display: flex; align-items: center; gap: 2px; overflow-x: auto; flex: 1; height: 100%; }
+#bookmarkBar::-webkit-scrollbar { display: none; }
+.bookmark-item { display: flex; align-items: center; gap: 2px; padding: 2px 3px; cursor: pointer; border-radius: 3px; flex-shrink: 0; height: 22px; }
+.bookmark-item:hover { opacity: 0.85; box-shadow: 0 0 0 1px #0af; }
+.bookmark-item img { width: 16px; height: 16px; flex-shrink: 0; }
+.bookmark-text { font-size: 11px; max-width: 5em; overflow: hidden; white-space: nowrap; color: #bbb; margin-left: 1px; }
+#frame { width: 100%; height: calc(100% - 30px); border: none; }
+#frame.mobile { margin: 0 auto; display: block; }
+#msg { display: flex; align-items: center; justify-content: center; height: calc(100% - 30px); font-size: 14px; }
+</style>
+</head><body>
+<div id="toolbar">
+  <div id="bookmarkBar"></div>
+  <button class="toolbar-btn" id="modeToggle" title="移动端/pc端界面">📱</button>
+  <button class="toolbar-btn" id="textToggle" title="显示文字">A</button>
+</div>
+<div id="msg">选择一个页面打开...<br>- 作为edge取消侧栏固定功能的替代项<br><br>- 受限于浏览器和网站对iframe的限制，并不总能正确显示网站。<br>- 顶部地址栏由设置中选中的组决定。<br><br>- 📱切换手机/pc模式<br>- A 显示文本标签</div>
+<iframe id="frame"></iframe>
+<script src="sidepanel.js"></script>
+</body></html>

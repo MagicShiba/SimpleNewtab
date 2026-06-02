@@ -70,11 +70,22 @@ html.light .header button:hover { background: #c8c8c8; }
 html.light .group-item:hover { background: #d0d0d0; }
 html.light .group h2 { border-bottom-color: #ccc; }
 html.light .empty { color: #aaa; }
+.side-toggle {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #eee;
+  user-select: none;
+}
+html.light .side-toggle { color: #333; }
 </style>
 </head>
 <body>
 <div class="header">
   <h1>收藏夹</h1>
+  <label class="side-toggle"><input type="checkbox" id="sidePanelToggle" checked> 侧栏打开</label>
   </div>
 <div class="groups" id="groupsContainer"></div>
 <script src="popup.js"></script>

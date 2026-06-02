@@ -1065,6 +1065,12 @@ function init() {
     if (document.getElementById('Div_history_hid').style.display === 'block') loadHistory('');
   });
 
+  document.getElementById('Div_sidepanel').addEventListener('click', function() {
+    chrome.windows.getCurrent(function(win) {
+      chrome.sidePanel.open({ windowId: win.id });
+    });
+  });
+
   document.getElementById('btnok').addEventListener('click', addLink);
   document.getElementById('btncancel').addEventListener('click', closeInputWindow);
   document.getElementById('btndelete').addEventListener('click', function() {

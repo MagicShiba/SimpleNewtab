@@ -3,7 +3,9 @@
   "version": "0.0.0.1",
   "manifest_version": 3,
   "description": "起始页测试",
-  "permissions": [ "topSites", "storage", "bookmarks", "favicon", "history" ],
+  "host_permissions": ["<all_urls>"],
+  
+  "permissions": [ "topSites", "storage", "bookmarks", "favicon", "history", "sidePanel", "declarativeNetRequest" ],
   
   "icons": {      
       "32": "src/ico_32.png",
@@ -15,11 +17,18 @@
   "chrome_url_overrides": {
       "newtab": "pag/ntp.html"
    },
-   
+    
   "action": {
       "default_popup": "pag/popup.html"
   },
   
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "side_panel": {
+    "default_path": "pag/sidepanel.html"
+  },
 
   "web_accessible_resources": [
     {

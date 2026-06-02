@@ -326,6 +326,10 @@ select.ipt option {
   display: flex;
   gap: 0;
   flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 3px;
 }
 .group-title{
   margin: 0.2em 0em;

@@ -117,7 +117,7 @@ function renderHistoryResults(results) {
 
 function loadHistory(query) {
   if (!query) {
-    chrome.history.search({ text: '', maxResults: 200, startTime: 0 }, function(results) {
+    chrome.history.search({ text: '', maxResults: 300, startTime: 0 }, function(results) {
       _historyCache = results;
       renderHistoryResults(results);
     });

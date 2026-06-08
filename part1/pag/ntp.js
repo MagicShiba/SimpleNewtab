@@ -1052,6 +1052,18 @@ function setupClock() {
   setInterval(updateClock, 1000);
 }
 
+// ---- sidebar UA ----
+function setupSidebarUA() {
+  var input = document.getElementById('sidebarUA');
+  chrome.storage.local.get('customUA', function(result) {
+    if (result.customUA) input.value = result.customUA;
+  });
+  input.addEventListener('change', function() {
+    var val = input.value.trim();
+    chrome.runtime.sendMessage({ action: 'setSidebarUA', ua: val });
+  });
+}
+
 // ---- popup group selection ----
 function renderPopupGroups() {
   var container = document.getElementById('popupGroupList');
@@ -1284,6 +1296,7 @@ function init() {
   setupWallpaper();
   setupClock();
   setupDragDrop();
+  setupSidebarUA();
   if (typeof initSearch === 'function') initSearch();
 
   window.addEventListener('beforeunload', function() {

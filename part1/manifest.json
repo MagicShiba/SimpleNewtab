@@ -4,8 +4,8 @@
   "manifest_version": 3,
   "description": "浏览器起始页和侧栏工具",
   "host_permissions": ["<all_urls>"],
-  "permissions": [ "topSites", "storage", "sidePanel" ,"declarativeNetRequest" ],
-  "optional_permissions": ["bookmarks", "favicon", "history"],
+  "permissions": [ "topSites", "storage", "sidePanel" ,"favicon", "declarativeNetRequest" ],
+  "optional_permissions": ["bookmarks", "history"],
   
   "icons": {      
       "32": "src/ico_32.png",

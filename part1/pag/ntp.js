@@ -1,5 +1,11 @@
 var _editKey = null;
 var _ctxSource = null;
+function hasPerm(perm, cb) {
+  chrome.permissions.contains({ permissions: [perm] }, cb);
+}
+function requestPerm(perm, cb) {
+  chrome.permissions.request({ permissions: [perm] }, cb);
+}
 var _wallpaperData = null;
 var _wallpaperObjectUrl = null;
 var _currentRawUrl = '';
@@ -28,6 +34,11 @@ function renderItem(site) {
   a.target = '_self';
   a.draggable = true;
   a.setAttribute('aria-label', site.title);
+  a.addEventListener('dragstart', function(e) {
+    e.dataTransfer.setData('text/plain', site.title + '\n' + site.url);
+    e.dataTransfer.setData('text/uri-list', site.url);
+    e.dataTransfer.setData('text/html', '<a href="' + site.url + '">' + site.title + '</a>');
+  });
 
   var img = document.createElement('img');
   img.src = site.icon || faviconURL(site.url);
@@ -116,19 +127,22 @@ function renderHistoryResults(results) {
 }
 
 function loadHistory(query) {
-  if (!query) {
-    chrome.history.search({ text: '', maxResults: 300, startTime: 0 }, function(results) {
-      _historyCache = results;
-      renderHistoryResults(results);
-    });
-  } else {
-    var q = query.toLowerCase();
-    var filtered = _historyCache.filter(function(item) {
-      return (item.title || '').toLowerCase().indexOf(q) !== -1 ||
-             (item.url || '').toLowerCase().indexOf(q) !== -1;
-    });
-    renderHistoryResults(filtered);
-  }
+  hasPerm('history', function(granted) {
+    if (!granted) return;
+    if (!query) {
+      chrome.history.search({ text: '', maxResults: 300, startTime: 0 }, function(results) {
+        _historyCache = results;
+        renderHistoryResults(results);
+      });
+    } else {
+      var q = query.toLowerCase();
+      var filtered = _historyCache.filter(function(item) {
+        return (item.title || '').toLowerCase().indexOf(q) !== -1 ||
+               (item.url || '').toLowerCase().indexOf(q) !== -1;
+      });
+      renderHistoryResults(filtered);
+    }
+  });
 }
 
 // ---- context menu ----
@@ -421,7 +435,8 @@ function openInputWindow(title, url, oldTitle) {
     var found = items.find(function(item) { return item.title === oldTitle; });
     if (found && found.icon) selectedIcon = found.icon;
   }
-  chrome.history.search({ text: '', maxResults: 100, startTime: 0 }, function(results) {
+  function loadIconOptions(results) {
+    if (!results) results = [];
     var noneDiv = document.createElement('div');
     noneDiv.className = 'icon-option' + (!selectedIcon ? ' selected' : '');
     noneDiv.textContent = '×';
@@ -453,6 +468,18 @@ function openInputWindow(title, url, oldTitle) {
       });
       iconOptions.appendChild(div);
     });
+  }
+  hasPerm('history', function(granted) {
+    if (granted && _historyCache && _historyCache.length) {
+      loadIconOptions(_historyCache);
+    } else if (granted) {
+      chrome.history.search({ text: '', maxResults: 100, startTime: 0 }, function(results) {
+        _historyCache = results || [];
+        loadIconOptions(_historyCache);
+      });
+    } else {
+      loadIconOptions([]);
+    }
   });
 }
 
@@ -576,15 +603,22 @@ function setupDragDrop() {
       }
     }
     if (url.indexOf('javascript:') === 0) { callback('无标题'); return; }
-    chrome.bookmarks.search({ url: url }, function(marks) {
-      if (marks && marks.length > 0 && marks[0].title) {
-        callback(marks[0].title); return;
-      }
-      chrome.history.search({ text: url, maxResults: 1 }, function(results) {
-        if (results.length > 0 && results[0].title) {
-          callback(results[0].title); return;
-        }
-        callback(url);
+    function titleFromBookmarks(cb) {
+      hasPerm('bookmarks', function(g) {
+        if (!g) { cb(); return; }
+        chrome.bookmarks.search({ url: url }, function(marks) {
+          if (marks && marks.length > 0 && marks[0].title) { callback(marks[0].title); return; }
+          cb();
+        });
+      });
+    }
+    titleFromBookmarks(function() {
+      hasPerm('history', function(g) {
+        if (!g) { callback(url); return; }
+        chrome.history.search({ text: url, maxResults: 1 }, function(results) {
+          if (results.length > 0 && results[0].title) { callback(results[0].title); return; }
+          callback(url);
+        });
       });
     });
   }
@@ -632,7 +666,7 @@ function setupDragDrop() {
 // ---- blur ----
 function applyBlur() {
   var enabled = document.getElementById('enableBlur').checked;
-  var items = document.querySelectorAll('.fli, .his-item');
+  var items = document.querySelectorAll('.fli, .his-item, .sug-item');
   items.forEach(function(el) {
     if (enabled) el.classList.add('blurred');
     else el.classList.remove('blurred');
@@ -879,6 +913,78 @@ function saveVisState() {
   });
 }
 
+// ---- search toggles ----
+function setupSearchToggles() {
+  var showSearch = document.getElementById('showSearch');
+  var searchBookmarks = document.getElementById('searchBookmarks');
+  var searchHistoryCb = document.getElementById('searchHistory');
+  var searchKeywords = document.getElementById('searchKeywords');
+  var searchHistoryMax = document.getElementById('searchHistoryMax');
+
+  chrome.storage.local.get('settings', function(result) {
+    var s = result.settings || {};
+    if (s.showSearch !== undefined) showSearch.checked = s.showSearch;
+    if (s.searchBookmarks !== undefined) searchBookmarks.checked = s.searchBookmarks;
+    if (s.searchHistory !== undefined) searchHistoryCb.checked = s.searchHistory;
+    if (s.searchKeywords !== undefined) searchKeywords.checked = s.searchKeywords;
+    if (s.searchHistoryMax !== undefined) searchHistoryMax.value = s.searchHistoryMax;
+    applySearchVisibility();
+  });
+
+  showSearch.addEventListener('change', function() { applySearchVisibility(); saveSearchState(); });
+  searchBookmarks.addEventListener('change', function() {
+    if (this.checked) {
+      requestPerm('bookmarks', function(g) {
+        if (!g) { searchBookmarks.checked = false; }
+        saveSearchState();
+        if (g && typeof loadBookmarks === 'function') loadBookmarks();
+      });
+    } else {
+      saveSearchState();
+    }
+  });
+  searchHistoryCb.addEventListener('change', function() {
+    if (this.checked) {
+      requestPerm('history', function(g) {
+        if (!g) { searchHistoryCb.checked = false; }
+        saveSearchState();
+        if (g && typeof loadSearchHistory === 'function') loadSearchHistory();
+      });
+    } else {
+      saveSearchState();
+    }
+  });
+  searchKeywords.addEventListener('change', function() { saveSearchState(); });
+  searchHistoryMax.addEventListener('change', function() { saveSearchState(); });
+
+  var engineToggle = document.getElementById('engineSectionToggle');
+  var engineBody = document.getElementById('engineSectionBody');
+  if (engineToggle && engineBody) {
+    engineToggle.addEventListener('click', function() {
+      var collapsed = engineBody.style.display === 'none';
+      engineBody.style.display = collapsed ? '' : 'none';
+      engineToggle.querySelector('.arrow').textContent = collapsed ? '▼' : '▶';
+    });
+  }
+}
+
+function applySearchVisibility() {
+  var el = document.getElementById('searchArea');
+  if (el) el.style.display = document.getElementById('showSearch').checked ? '' : 'none';
+}
+
+function saveSearchState() {
+  chrome.storage.local.get('settings', function(result) {
+    var s = result.settings || {};
+    s.showSearch = document.getElementById('showSearch').checked;
+    s.searchBookmarks = document.getElementById('searchBookmarks').checked;
+    s.searchHistory = document.getElementById('searchHistory').checked;
+    s.searchKeywords = document.getElementById('searchKeywords').checked;
+    s.searchHistoryMax = parseInt(document.getElementById('searchHistoryMax').value, 10) || 300;
+    chrome.storage.local.set({ 'settings': s });
+  });
+}
+
 // ---- lunar calendar ----
 var lunarInfo = [0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x16a95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63];
 var lunarMonths = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
@@ -1062,7 +1168,14 @@ function init() {
 
   document.getElementById('Div_history_icon').addEventListener('click', function() {
     togglePanel('Div_history_hid', 'Div_history_icon');
-    if (document.getElementById('Div_history_hid').style.display === 'block') loadHistory('');
+    if (document.getElementById('Div_history_hid').style.display === 'block') {
+      hasPerm('history', function(g) {
+        if (g) { loadHistory(''); return; }
+        requestPerm('history', function(g2) {
+          if (g2) loadHistory('');
+        });
+      });
+    }
   });
 
   document.getElementById('Div_sidepanel').addEventListener('click', function() {
@@ -1165,11 +1278,13 @@ function init() {
   });
 
   setupToggles();
+  setupSearchToggles();
   setupBlurToggle();
   setupLightMode();
   setupWallpaper();
   setupClock();
   setupDragDrop();
+  if (typeof initSearch === 'function') initSearch();
 
   window.addEventListener('beforeunload', function() {
     if (_wallpaperObjectUrl) URL.revokeObjectURL(_wallpaperObjectUrl);

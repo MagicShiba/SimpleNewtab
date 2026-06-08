@@ -2,10 +2,10 @@
   "name": "起始页",
   "version": "0.0.0.1",
   "manifest_version": 3,
-  "description": "起始页测试",
-  "host_permissions": ["<all_urls>"],
+  "description": "浏览器起始页和侧栏工具",
   
-  "permissions": [ "topSites", "storage", "bookmarks", "favicon", "history", "sidePanel", "declarativeNetRequest" ],
+  "permissions": [ "topSites", "storage", "sidePanel" ,"declarativeNetRequest" ],
+  "optional_permissions": ["bookmarks", "favicon", "history"],
   
   "icons": {      
       "32": "src/ico_32.png",

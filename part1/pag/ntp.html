@@ -3,9 +3,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="ntp.js"></script>
+<script src="search.js"></script>
 <link rel="stylesheet" href="ntp.css">
 <title>起始页</title>
 <body>
+<div id="main-wrap">
+  <div id="searchArea">
+    <div class="search-bar" id="searchBar">
+      <div class="search-engines" id="searchEngines"></div>
+      <div class="search-input-wrap">
+        <input type="text" id="searchInput" placeholder="搜索或输入网址..." autocomplete="off" spellcheck="false">
+        <div class="search-history" id="searchRecentDropdown" style="display:none"></div>
+        <div class="search-suggestions" id="searchSuggestions" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="left-div" id="left-drop-zone">
+      <div class="group-bar"><h2 class="group-title">收藏</h2><div class="group-tabs" id="groupTabs"></div><div class="group-add-btn" id="groupAddBtn">+</div></div>
+      <p>从右侧拖动链接到此处添加收藏。</p>
+      <div class="drop-hint" id="dropHint">释放以添加收藏</div>
+      <div id="fov-list"></div>
+    </div>
+    <div class="right-div">
+      <h2>最近访问</h2><p>这由浏览器自动生成。</p>
+      <div id='most-visited-list'></div>
+    </div>
+  </div>
+</div>
 
 <div id="top-right-icons">
   <div id="Div_seting" title="设置">
@@ -20,12 +46,30 @@
 </div>
 
 <div id="Div_seting_hid">
-  <h3 class="panel-title">设置</h3>
+  <h3 class="panel-title">界面设置</h3>
+  <label class="toggle-label"><input type="checkbox" id="showSearch" checked> 显示搜索框</label>
   <label class="toggle-label"><input type="checkbox" id="showFav" checked> 显示收藏</label>
   <label class="toggle-label"><input type="checkbox" id="showRecent" checked> 显示最近访问</label>
   <label class="toggle-label"><input type="checkbox" id="enableBlur"> 模糊地址(截图用)</label>
   <label class="toggle-label"><input type="checkbox" id="lightMode"> 亮色模式</label>
   <label class="toggle-label"><input type="checkbox" id="showClock" checked> 显示时钟</label>
+  <div class="setting-divider"></div>
+  <h4 class="setting-subtitle">搜索</h4>
+  <label class="toggle-label"><input type="checkbox" id="searchBookmarks"> 搜索书签</label>
+  <label class="toggle-label"><input type="checkbox" id="searchKeywords" checked> 搜索关键词</label>
+  <label class="toggle-label"><input type="checkbox" id="searchHistory"> 搜索历史记录</label>
+  <div class="range-row">
+    <label>历史记录上限:</label>
+    <input type="number" id="searchHistoryMax" min="50" max="5000" value="300" class="ipt" style="width:80px;flex:none;">
+  </div>
+  <div class="setting-divider"></div>
+  <h4 class="setting-subtitle collapsible" id="engineSectionToggle">搜索引擎 <span class="arrow">▶</span></h4>
+  <div id="engineSectionBody" style="display:none">
+    <div id="searchEngineList"></div>
+    <div class="btn-row">
+      <button id="addEngineBtn" class="btn">添加搜索引擎</button>
+    </div>
+  </div>
   <div class="setting-divider"></div>
   <h4 class="setting-subtitle">壁纸</h4>
   <input type="text" id="wallpaperUrl" class="ipt" placeholder="壁纸图片URL...">
@@ -72,6 +116,15 @@
   </div>
   <input type="file" id="importFile" accept=".md,.txt" hidden>
 </div>
+<div id="engineDialog" style="display:none">
+  <p class="_title">名称:</p>
+  <input type="text" id="engineName" class="ipt" placeholder="引擎名称">
+  <p class="_title">搜索URL:</p>
+  <input type="text" id="engineUrl" class="ipt" placeholder="https://example.com/search?q=">
+  <div class="div_btn">
+    <button class="btn" id="engineCancel">取消</button><button class="btn" id="engineOk">确定</button>
+  </div>
+</div>
 
 <div id="Div_history_hid">
   <h3 class="panel-title">历史记录</h3>
@@ -99,19 +152,6 @@
   <input type="hidden" id="u_icon" value="">
   <div class="div_btn">
     <button class="btn" id="btndelete" style="display:none">删除</button><button class="btn" id="btncancel">取消</button><button class="btn" id="btnok">确定</button>
-  </div>
-</div>
-
-<div class="container">
-  <div class="left-div" id="left-drop-zone">
-    <div class="group-bar"><h2 class="group-title">收藏</h2><div class="group-tabs" id="groupTabs"></div><div class="group-add-btn" id="groupAddBtn">+</div></div>
-    <p>从右侧拖动链接到此处添加收藏。</p>
-    <div class="drop-hint" id="dropHint">释放以添加收藏</div>
-    <div id="fov-list"></div>
-  </div>
-  <div class="right-div">
-    <h2>最近访问</h2><p>这由浏览器自动生成。</p>
-    <div id='most-visited-list'></div>
   </div>
 </div>
 <div id="wallpaper-bg-wrap"><div id="wallpaper-bg"></div></div>

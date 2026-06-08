@@ -11,9 +11,9 @@ var _bookmarkCache = [];
 var _blurTimer = null;
 
 var DEFAULT_ENGINES = [
+  { name: 'Bing',      url: 'https://www.bing.com/search?q=',       enabled: true,  isDefault: true },
   { name: 'Google',    url: 'https://www.google.com/search?q=',     enabled: true,  isDefault: true },
   { name: '百度',      url: 'https://www.baidu.com/s?wd=',          enabled: true,  isDefault: true },
-  { name: 'Bing',      url: 'https://www.bing.com/search?q=',       enabled: true,  isDefault: true },
   { name: 'DuckDuckGo',url: 'https://duckduckgo.com/?q=',           enabled: false, isDefault: true },
   { name: '搜狗',      url: 'https://www.sogou.com/web?query=',     enabled: false, isDefault: true }
 ];
@@ -22,9 +22,10 @@ function initSearch() {
   updateSearchFlags();
   loadSearchSettings(function() {
     renderEngines();
+    renderEngineSettings();
   });
-  loadSearchHistory();
   loadBookmarks();
+  loadSearchHistory();
   setupSearchEvents();
   setupSearchSettings();
   chrome.storage.onChanged.addListener(function(changes, area) {
@@ -596,6 +597,7 @@ function renderEngineSettings() {
   _searchEngines.forEach(function(e, i) {
     var row = document.createElement('div');
     row.className = 'engine-row';
+    row.draggable = true;
     var cb = document.createElement('input');
     cb.type = 'checkbox';
     cb.checked = e.enabled;
@@ -639,13 +641,39 @@ function renderEngineSettings() {
       });
       row.appendChild(del);
     }
+    // drag reorder
+    row.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('text/plain', '' + i);
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', function() {
+      row.classList.remove('dragging');
+      list.querySelectorAll('.drag-over').forEach(function(el) { el.classList.remove('drag-over'); });
+    });
+    row.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      list.querySelectorAll('.drag-over').forEach(function(el) { el.classList.remove('drag-over'); });
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', function() {
+      row.classList.remove('drag-over');
+    });
+    row.addEventListener('drop', function(e) {
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      var from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (isNaN(from) || from === i) return;
+      var item = _searchEngines.splice(from, 1)[0];
+      _searchEngines.splice(i, 0, item);
+      saveSearchEngines();
+      renderEngineSettings();
+      renderEngines();
+    });
     list.appendChild(row);
   });
 }
 
 function setupSearchSettings() {
-  renderEngineSettings();
-
   document.getElementById('addEngineBtn').addEventListener('click', function() {
     _editingEngineIdx = -1;
     document.getElementById('engineName').value = '';

@@ -762,8 +762,8 @@ html.light #clockTime { color: #333; text-shadow: 1px 1px 4px #fffA; }
 
 /* ---- search ---- */
 #searchArea { width: 70%; margin-bottom: 30px; flex-shrink: 0; }
-.search-bar { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-.search-engines { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-start; }
+.search-bar { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.search-engines { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-start; }
 .search-engines::-webkit-scrollbar { display: none; }
 .engine-btn {
   padding: 5px 10px; font-size: 14px; border:unset; background: #333; font-weight: bold;
@@ -779,21 +779,21 @@ html.light #clockTime { color: #333; text-shadow: 1px 1px 4px #fffA; }
 }
 #searchInput:focus { border-color: #0af; }
 .search-suggestions, .search-history {
-  position: absolute; top: 100%; left: 0; right: 0; background: #333;
-  border: 1px solid #555; border-top: none; max-height: 320px; overflow-y: auto;
-  z-index: 1000; border-radius: 0 0 4px 4px;
+  position: absolute; top: 100%; left: 0;max-width: stretch;min-width:200px; background: #333;
+  max-height: 320px; overflow-y: auto;
+  z-index: 1000; border-radius:4px;
 }
 .search-suggestions::-webkit-scrollbar, .search-history::-webkit-scrollbar { width: 4px; }
 .sug-item {
-  display: flex; align-items: center; gap: 0.5em; padding: 6px 8px; margin: 2px;
-  cursor: pointer; font-size: 13px; background-color: #444; color: white;
+  display: flex; align-items: center; gap: 0.5em; padding: 4px 8px; margin: 2px;
+  cursor: pointer;background-color: #444; color: white;    border-radius: 3px;
 }
 .sug-item.user-select-none { user-select: none; -webkit-user-select: none; }
 .sug-item:hover, .sug-item.active { background-color: #000; box-shadow: 0 0 0 2px #0ff; }
 .sug-item .type { color: #aaa; font-size: 11px; flex-shrink: 0; width: 3em; }
 .sug-item .body { display: inline-flex; align-items: center; gap: 0.5em; flex: 1; min-width: 0; }
 .sug-item .text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.sug-item .preview { color: #0af; font-size: 12px; flex-shrink: 0; white-space: nowrap; }
+.sug-item .preview { color: #0af; flex-shrink: 0; white-space: nowrap; }
 .sug-item .color-swatch { width: 20px; height: 20px; border-radius: 3px; border: 1px solid #555; flex-shrink: 0; }
 .sug-item .del-btn { color: #f77; cursor: pointer; font-size: 16px; padding: 2px 8px; flex-shrink: 0; font-weight: bold; }
 .sug-item .del-btn:hover { color: #f00; background: rgba(255,0,0,0.15); border-radius: 3px; }
@@ -828,7 +828,7 @@ html.light .engine-btn.active { border-color: #0af; color: #0af; }
 html.light .engine-btn.multi { border-color: #080; color: #080; }
 html.light .search-suggestions, html.light .search-history { background: #eee; border-color: #ccc; }
 html.light .sug-item { background-color: #fff; color: #333; }
-html.light .sug-item:hover, html.light .sug-item.active { background-color: #e0e0e0; box-shadow: none; }
+html.light .sug-item:hover, html.light .sug-item.active { background-color: #e0e0e0;box-shadow: 0 0 0 2px #0af; }
 html.light .sug-item .type { color: #888; }
 html.light .sug-item .preview { color: #0af; }
 html.light .sug-item .body .text { color: #333; }

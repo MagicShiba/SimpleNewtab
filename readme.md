@@ -35,7 +35,7 @@
 导入导出收藏 - 使用简单的markdown格式  
 设置点击插件图标时显示的组 - 意义不大  
 <img width="50%" src="other/pop.png">  
-侧栏 - 展开侧栏和在侧栏中打开网页，默认使用移动端布局来减少空间占用。
+侧栏 - 展开侧栏和在侧栏中打开网页，默认使用移动端布局来减少空间占用。使用了ios的UA应该可以避免国内网站自动下载app。你也可以自定义UA  
 ![alt text](other/clmn.png)  
 
 ### 使用
@@ -45,6 +45,24 @@
 因为自用，而且受限太多，目前没有发布计划。  
 在浏览器插件页面加载解压的插件即可。  
 缺点是浏览器不希望这么使用插件，每两周浏览器会弹次提示。
+
+## 权限使用说明
+网址权限:  
+host_permissions <all_urls>  
+对所有网址生效，为了在侧栏中使用自定义UA。
+
+主要权限：
+permissions  
+- topSites 设置浏览器主页
+- storage 储存设置
+- sidePanel 允许使用侧边栏
+- favicon  允许显示网站图标
+- declarativeNetRequest  修改请求以定义UA
+
+可选权限：
+optional_permissions  
+- bookmarks  读取书签，用于搜索书签
+- history  读取历史，用于搜索历史
 
 亮色主题+设置(设置和历史在右上角,不显眼)
 ![alt text](other/themel.png)
